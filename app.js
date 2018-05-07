@@ -114,6 +114,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, SusanImage, SusanMo
 
 	var susanIndices = [].concat.apply([], SusanModel.meshes[0].faces);
 	var susanTexCoords = SusanModel.meshes[0].texturecoords[0];
+	var susanNormals = SusanModel.meshes[0].normals;
 
 	var susanPosVertexBufferObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, susanPosVertexBufferObject);
@@ -127,6 +128,9 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, SusanImage, SusanMo
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, susanIndexBufferObject);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(susanIndices), gl.STATIC_DRAW);
 
+	var susanNormalBufferObject = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, susanNormalBufferObject);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(susanNormals), gl.STATIC_DRAW);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, susanPosVertexBufferObject);
 	var positionAttributeLocation = gl.getAttribLocation(program, 'vertPosition');	
@@ -158,8 +162,19 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, SusanImage, SusanMo
 		0
 	);
 
-	
 	gl.enableVertexAttribArray(texAttributeLocation);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, susanNormalBufferObject);
+	var normalAttribLocation = gl.getAttribLocation(program, 'vertNormal');
+	gl.vertexAttribPointer(
+		normalAttribLocation,
+		3, gl.FLOAT,
+		gl.TRUE,
+		3 * Float32Array.BYTES_PER_ELEMENT,
+		0
+	);
+
+	gl.enableVertexAttribArray(normalAttribLocation);
 
 	var susanTexture = gl.createTexture();
 	gl.bindTexture(gl.TEXTURE_2D, susanTexture);
@@ -182,7 +197,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, SusanImage, SusanMo
 	var projMatrix = new Float32Array(16);
 
 	mat4.identity(worldMatrix);
-	mat4.lookAt(viewMatrix, [0, 0, -10], [0,0,0], [0,1,0]);
+	mat4.lookAt(viewMatrix, [0, -10, 2], [0,0,0], [0,1,0]);
 	mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
 
 	gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, 	worldMatrix);
@@ -193,16 +208,31 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, SusanImage, SusanMo
 	var yRotationMatrix = new Float32Array(16);
 
 	//
+	// Lighting information
+	// 
+	gl.useProgram(program);
+
+	var ambientUniformLocation = gl.getUniformLocation(program, 'ambientLightIntensity');
+	var sunlightDUniformLocation = gl.getUniformLocation(program, 'sun.direction');
+	var sunlightIUniformLocation = gl.getUniformLocation(program, 'sun.color');
+
+	gl.uniform3f(ambientUniformLocation, 0.5, 0.5, 0.5);
+	gl.uniform3f(sunlightDUniformLocation, -1.0, -1.0, -0.5);
+	gl.uniform3f(sunlightIUniformLocation, 0.9, 0.9, 0.9);
+
+	//
 	//main render loop
 	//
 	var identityMatrix = new Float32Array(16);
 	mat4.identity(identityMatrix);
+	// mat4.transpose(identityMatrix, identityMatrix);
 	var angle = 0;
 	var loop = function(){
 		angle = performance.now() / 1000 / 6 * 2 * Math.PI;
-		mat4.rotate(yRotationMatrix, identityMatrix, angle, [0, 1, 0]); 
-		mat4.rotate(xRotationMatrix, identityMatrix, angle / 4, [1, 0, 0]);
-		mat4.mul(worldMatrix, yRotationMatrix, xRotationMatrix);
+		mat4.rotate(yRotationMatrix, identityMatrix, 0, [0, 1, 0]); 
+		mat4.rotate(xRotationMatrix, identityMatrix, angle, [0, 0, 1]);
+		mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+
 		gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
 
 
