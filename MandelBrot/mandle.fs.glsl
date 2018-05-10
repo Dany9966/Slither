@@ -14,8 +14,8 @@ void main(){
 
 	vec2 z = c;
 	float iterations = 0.0;
-	float maxIterations = 2000.0;
-	const int maxii = 2000;
+	float maxIterations = 4000.0;
+	const int maxii = 4000;
 
 	for(int i = 0; i < maxii; i++){
 		float t = 2.0 * z.x * z.y + c.y;

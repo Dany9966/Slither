@@ -50,6 +50,7 @@ function RunDemo(loadErrors, loadedShaders){
 	//Attach callbacks
 	// addEvent(window, 'resize', onResizeWindow);
 	addEvent(window, 'wheel', onZoom);
+	addEvent(window, 'mousemove', onMouseMove);
 
 	canvas = document.getElementById('gl-surface');
 	gl = canvas.getContext('webgl');
@@ -166,22 +167,24 @@ function RunDemo(loadErrors, loadedShaders){
 	};
 
 	requestAnimationFrame(loop);
+	
+	onResizeWindow();
 
 	function onResizeWindow(){
 		if(!canvas){
 			return;
 		}
 
-		// canvas.width = window.innerWidth;
-		// canvas.height = window.innerHeight;
-		// vpDimensions = [canvas.width, canvas.height];
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		vpDimensions = [canvas.width, canvas.height];
 
 		var oldRealRange = maxR - minR;
-		maxR = (maxI - minI) * (canvas.height / canvas.width) * 1.4 + minR;
+		maxR = (maxI - minI) * (canvas.width / canvas.height) / 1.4 + minR;
 		var newRealRange = maxR - minR;
 
 		minR -= (newRealRange - oldRealRange) / 2;
-		maxR = (maxI - minI) * (canvas.height / canvas.width) * 1.4 + minR;
+		maxR = (maxI - minI) * (canvas.width / canvas.height) / 1.4 + minR;
 
 		gl.viewport(0, 0, canvas.width, canvas.height);
 	};
@@ -205,4 +208,33 @@ function RunDemo(loadErrors, loadedShaders){
 
 		onResizeWindow();
 	};
+	
+	function onMouseMove(e) {
+		if(e.buttons === 1){
+			var iRange = maxI - minI;
+			var rRange = maxR - minR;
+			
+			var iDelta = (e.movementY / canvas.height) * iRange;
+			var rDelta = (e.movementX / canvas.width) * rRange;
+			
+			minI += iDelta;
+			maxI += iDelta;
+			minR -= rDelta;
+			maxR -= rDelta;
+		}
+	};
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
